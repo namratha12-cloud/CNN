@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIFAR-10 Image Classifier</title>
+    <meta name="description" content="Deep learning powered CIFAR-10 image classification using Convolutional Neural Networks">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1 class="title">
+                    <span class="gradient-text">CIFAR-10</span> Image Classifier
+                </h1>
+                <p class="subtitle">Powered by Deep Learning & Convolutional Neural Networks</p>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="upload-section">
+                <div class="card upload-card">
+                    <h2 class="card-title">Upload Image</h2>
+                    <div class="upload-area" id="uploadArea">
+                        <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <p class="upload-text">Drag & drop an image here</p>
+                        <p class="upload-subtext">or click to browse</p>
+                        <input type="file" id="fileInput" accept="image/*" hidden>
+                    </div>
+                    
+                    <button class="btn btn-secondary" id="randomBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Try Random Sample
+                    </button>
+                </div>
+
+                <div class="card preview-card" id="previewCard" style="display: none;">
+                    <h2 class="card-title">Preview</h2>
+                    <div class="image-preview">
+                        <img id="previewImage" src="" alt="Preview">
+                    </div>
+                    <button class="btn btn-primary" id="classifyBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Classify Image
+                    </button>
+                </div>
+            </div>
+
+            <div class="results-section" id="resultsSection" style="display: none;">
+                <div class="card results-card">
+                    <h2 class="card-title">Classification Results</h2>
+                    
+                    <div class="prediction-main">
+                        <div class="prediction-label">Predicted Class</div>
+                        <div class="prediction-class" id="predictedClass">-</div>
+                        <div class="confidence-badge" id="confidenceBadge">
+                            <span id="confidenceValue">0%</span> confidence
+                        </div>
+                    </div>
+
+                    <div class="top-predictions">
+                        <h3 class="predictions-title">Top 5 Predictions</h3>
+                        <div id="top5Container"></div>
+                    </div>
+                </div>
+
+                <div class="card info-card">
+                    <h3 class="info-title">CIFAR-10 Classes</h3>
+                    <div class="classes-grid">
+                        {% for class_name in class_names %}
+                        <div class="class-item">
+                            <div class="class-icon">{{ loop.index0 }}</div>
+                            <div class="class-name">{{ class_name }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+                <div class="spinner"></div>
+                <p class="loading-text">Classifying image...</p>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>Built with PyTorch & Flask | CNN Architecture with 3 Convolutional Blocks</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
