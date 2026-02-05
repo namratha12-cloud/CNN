@@ -12,6 +12,9 @@ NUM_WORKERS = 0  # Set to 0 for better stability on some systems without GPU
 NUM_CLASSES = 10
 INPUT_CHANNELS = 3
 IMAGE_SIZE = 32
+HIDDEN_SIZE = 256
+NUM_LAYERS = 2
+RNN_DROPOUT = 0.2
 
 # Training configuration
 EPOCHS = 5

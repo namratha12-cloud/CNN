@@ -1,10 +1,10 @@
-# CIFAR-10 CNN Image Classifier
+# CIFAR-10 RNN Image Classifier
 
-An end-to-end deep learning project for classifying CIFAR-10 images using a Convolutional Neural Network (CNN) built with PyTorch. Includes a modern web interface for real-time image classification.
+An end-to-end deep learning project for classifying CIFAR-10 images using a Recurrent Neural Network (LSTM) built with PyTorch. Includes a modern web interface for real-time image classification.
 
 ## 🌟 Features
 
-- **Custom CNN Architecture**: 3 convolutional blocks with batch normalization and dropout
+- **Custom RNN Architecture**: Bidirectional LSTM layers with dropout
 - **Complete Training Pipeline**: Automated training with validation, checkpointing, and visualization
 - **Comprehensive Evaluation**: Confusion matrix, classification reports, and prediction visualizations
 - **Modern Web Interface**: Beautiful Flask web app for real-time image classification
@@ -12,20 +12,18 @@ An end-to-end deep learning project for classifying CIFAR-10 images using a Conv
 
 ## 📊 Model Architecture
 
+The model treats each 32x32 RGB image as a sequence of 32 rows, where each row has 96 features (32 pixels * 3 channels).
+
 ```
-Input (32x32x3)
+Input (Batch, 3, 32, 32)
     ↓
-Conv Block 1: Conv2d(64) → BatchNorm → ReLU → Conv2d(64) → BatchNorm → ReLU → MaxPool → Dropout(0.2)
+Reshape (Batch, 32, 96)
     ↓
-Conv Block 2: Conv2d(128) → BatchNorm → ReLU → Conv2d(128) → BatchNorm → ReLU → MaxPool → Dropout(0.3)
+Bidirectional LSTM (Hidden: 256, Layers: 2, Dropout: 0.2)
     ↓
-Conv Block 3: Conv2d(256) → BatchNorm → ReLU → Conv2d(256) → BatchNorm → ReLU → MaxPool → Dropout(0.4)
+Last Time Step Output
     ↓
-Flatten
-    ↓
-FC Layer 1: Linear(512) → BatchNorm → ReLU → Dropout(0.5)
-    ↓
-FC Layer 2: Linear(10)
+Fully Connected (512) → ReLU → Dropout(0.3)
     ↓
 Output (10 classes)
 ```

@@ -1,96 +1,87 @@
 """
-CNN Model Architecture for CIFAR-10 Classification
+RNN Model Architecture for CIFAR-10 Classification
 """
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+import config
 
 
-class CIFAR10CNN(nn.Module):
+class CIFAR10RNN(nn.Module):
     """
-    Convolutional Neural Network for CIFAR-10 classification
+    Recurrent Neural Network (LSTM) for CIFAR-10 classification
     
     Architecture:
-    - 3 Convolutional blocks with batch normalization and max pooling
-    - 2 Fully connected layers with dropout
-    - Output layer with 10 classes
+    - Input sequence: 32 rows of 32x3 pixels (= 96 features per step)
+    - Bidirectional LSTM layers
+    - Fully connected layer for classification
     """
     
-    def __init__(self, num_classes=10):
-        super(CIFAR10CNN, self).__init__()
+    def __init__(self, input_size=96, hidden_size=256, num_layers=2, num_classes=10):
+        super(CIFAR10RNN, self).__init__()
         
-        # Convolutional Block 1
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, padding=1)
-        self.bn1 = nn.BatchNorm2d(64)
-        self.conv2 = nn.Conv2d(64, 64, kernel_size=3, padding=1)
-        self.bn2 = nn.BatchNorm2d(64)
-        self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.dropout1 = nn.Dropout2d(0.2)
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
         
-        # Convolutional Block 2
-        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
-        self.bn3 = nn.BatchNorm2d(128)
-        self.conv4 = nn.Conv2d(128, 128, kernel_size=3, padding=1)
-        self.bn4 = nn.BatchNorm2d(128)
-        self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.dropout2 = nn.Dropout2d(0.3)
+        # LSTM Layer
+        # batch_first=True means input shape is (batch, seq, feature)
+        self.lstm = nn.LSTM(
+            input_size, 
+            hidden_size, 
+            num_layers, 
+            batch_first=True, 
+            bidirectional=True,
+            dropout=config.RNN_DROPOUT if num_layers > 1 else 0
+        )
         
-        # Convolutional Block 3
-        self.conv5 = nn.Conv2d(128, 256, kernel_size=3, padding=1)
-        self.bn5 = nn.BatchNorm2d(256)
-        self.conv6 = nn.Conv2d(256, 256, kernel_size=3, padding=1)
-        self.bn6 = nn.BatchNorm2d(256)
-        self.pool3 = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.dropout3 = nn.Dropout2d(0.4)
-        
-        # Fully Connected Layers
-        self.fc1 = nn.Linear(256 * 4 * 4, 512)
-        self.bn7 = nn.BatchNorm1d(512)
-        self.dropout4 = nn.Dropout(0.5)
-        self.fc2 = nn.Linear(512, num_classes)
+        # Fully Connected Layer
+        # * 2 because of bidirectional
+        self.fc = nn.Sequential(
+            nn.Linear(hidden_size * 2, 512),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(512, num_classes)
+        )
         
     def forward(self, x):
-        # Block 1
-        x = F.relu(self.bn1(self.conv1(x)))
-        x = F.relu(self.bn2(self.conv2(x)))
-        x = self.pool1(x)
-        x = self.dropout1(x)
+        # x shape: (batch, 3, 32, 32)
+        # Convert to: (batch, seq_len=32, input_size=96)
+        batch_size = x.size(0)
         
-        # Block 2
-        x = F.relu(self.bn3(self.conv3(x)))
-        x = F.relu(self.bn4(self.conv4(x)))
-        x = self.pool2(x)
-        x = self.dropout2(x)
+        # Rearrange image rows into a sequence
+        # (batch, 3, 32, 32) -> (batch, 32, 3, 32) -> (batch, 32, 96)
+        x = x.permute(0, 2, 1, 3).contiguous()
+        x = x.view(batch_size, 32, -1)
         
-        # Block 3
-        x = F.relu(self.bn5(self.conv5(x)))
-        x = F.relu(self.bn6(self.conv6(x)))
-        x = self.pool3(x)
-        x = self.dropout3(x)
+        # LSTM Forward pass
+        # out: tensor of shape (batch, seq_len, hidden_size * 2)
+        out, _ = self.lstm(x)
         
-        # Flatten
-        x = x.view(x.size(0), -1)
+        # Take the output of the last time step
+        out = out[:, -1, :]
         
-        # Fully Connected
-        x = F.relu(self.bn7(self.fc1(x)))
-        x = self.dropout4(x)
-        x = self.fc2(x)
+        # Classification
+        out = self.fc(out)
         
-        return x
+        return out
 
 
 def get_model(num_classes=10, device='cpu'):
     """
-    Create and return the CNN model
+    Create and return the RNN model
     
     Args:
         num_classes (int): Number of output classes
         device (str or torch.device): Device to load the model on
         
     Returns:
-        CIFAR10CNN: The CNN model
+        CIFAR10RNN: The RNN model
     """
-    model = CIFAR10CNN(num_classes=num_classes)
+    model = CIFAR10RNN(
+        input_size=32*3, 
+        hidden_size=config.HIDDEN_SIZE, 
+        num_layers=config.NUM_LAYERS, 
+        num_classes=num_classes
+    )
     model = model.to(device)
     return model
 
@@ -98,11 +89,5 @@ def get_model(num_classes=10, device='cpu'):
 def count_parameters(model):
     """
     Count the number of trainable parameters in the model
-    
-    Args:
-        model: PyTorch model
-        
-    Returns:
-        int: Number of trainable parameters
     """
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
